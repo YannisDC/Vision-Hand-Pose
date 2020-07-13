@@ -8,20 +8,6 @@
 
 import CoreGraphics
 
-public struct Thumb {
-    let TIP: CGPoint
-    let IP: CGPoint
-    let MP: CGPoint
-    let CMC: CGPoint
-}
-
-public struct Finger {
-    let TIP: CGPoint
-    let DIP: CGPoint
-    let PIP: CGPoint
-    let MCP: CGPoint
-}
-
 class ApprovalGestureProcessor {
     enum State {
         case possibleThumbsUp
@@ -30,8 +16,6 @@ class ApprovalGestureProcessor {
         case thumbsDown
         case unknown
     }
-    
-    typealias PointsFingers = (thumb: Thumb, index: Finger, middle: Finger, ring: Finger, little: Finger, wrist: CGPoint)
     
     private var state = State.unknown {
         didSet {
@@ -44,14 +28,9 @@ class ApprovalGestureProcessor {
     private let evidenceCounterStateTrigger: Int
     
     var didChangeStateClosure: ((State) -> Void)?
-    private (set) var lastProcessedPointsFingers = PointsFingers(thumb: Thumb(TIP: .zero, IP: .zero, MP: .zero, CMC: .zero),
-                                                              index: Finger(TIP: .zero, DIP: .zero, PIP: .zero, MCP: .zero),
-                                                              middle: Finger(TIP: .zero, DIP: .zero, PIP: .zero, MCP: .zero),
-                                                              ring: Finger(TIP: .zero, DIP: .zero, PIP: .zero, MCP: .zero),
-                                                              little: Finger(TIP: .zero, DIP: .zero, PIP: .zero, MCP: .zero),
-                                                              wrist: .zero)
+    private (set) var lastProcessedPointsFingers = defaultHand
     
-    init(pinchMaxDistance: CGFloat = 40, evidenceCounterStateTrigger: Int = 3) {
+    init(pinchMaxDistance: CGFloat = 40, evidenceCounterStateTrigger: Int = 5) {
         self.pinchMaxDistance = pinchMaxDistance
         self.evidenceCounterStateTrigger = evidenceCounterStateTrigger
     }
@@ -62,9 +41,10 @@ class ApprovalGestureProcessor {
         apartEvidenceCounter = 0
     }
     
-    func processPointsFingers(_ pointsFingers: PointsFingers) {
+    func processFingerPoints(_ pointsFingers: Fingers) {
         lastProcessedPointsFingers = pointsFingers
-        let distance = pointsFingers.index.TIP.isLocatedLower(then: pointsFingers.thumb.TIP)
+//        let distance = pointsFingers.index.TIP.isLocatedLower(then: pointsFingers.thumb.TIP)
+        let distance = pointsFingers.index.TIP.distance(from: pointsFingers.thumb.TIP)
         if distance < pinchMaxDistance {
             // Keep accumulating evidence for pinch state.
             pinchEvidenceCounter += 1

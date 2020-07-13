@@ -9,117 +9,80 @@ import UIKit
 import AVFoundation
 import Vision
 
-class CameraViewController: UIViewController {
+class CameraViewController: RecorderViewController {
+    var recordButton: UIButton = {
+        var button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setTitle("record", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 25)
+        button.titleLabel?.textColor = .systemYellow
+        return button
+    }()
+    private let label = UILabel(frame: CGRect(x: 100, y: 100, width: 100, height: 100))
     
     private var cameraView: CameraView { view as! CameraView }
-    
-    private let videoDataOutputQueue = DispatchQueue(label: "CameraFeedDataOutput", qos: .userInteractive)
-    private var cameraFeedSession: AVCaptureSession?
     private var handPoseRequest = VNDetectHumanHandPoseRequest()
+    private var gestureProcessor = ApprovalGestureProcessor()
     
     private let drawOverlay = CAShapeLayer()
     private let drawPath = UIBezierPath()
-    private var evidenceBuffer = [ApprovalGestureProcessor.PointsFingers]()
+    private var evidenceBuffer = [Fingers]()
     private var lastDrawPoint: CGPoint?
     private var isFirstSegment = true
     private var lastObservationTimestamp = Date()
-    
-    private let label = UILabel(frame: CGRect(x: 100, y: 100, width: 100, height: 100))
-    
-    private var gestureProcessor = ApprovalGestureProcessor()
-    
-    struct PossibleThumb {
-        let TIP: CGPoint?
-        let IP: CGPoint?
-        let MP: CGPoint?
-        let CMC: CGPoint?
-    }
-    
-    struct PossibleFinger {
-        let TIP: CGPoint?
-        let DIP: CGPoint?
-        let PIP: CGPoint?
-        let MCP: CGPoint?
-    }
-    
-    typealias PossibleFingers = (thumb: PossibleThumb, index: PossibleFinger, middle: PossibleFinger, ring: PossibleFinger, little: PossibleFinger, wrist: CGPoint?)
+    var startedRecording = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         drawOverlay.frame = view.layer.bounds
-        drawOverlay.lineWidth = 5
-        drawOverlay.backgroundColor = #colorLiteral(red: 0.9999018312, green: 1, blue: 0.9998798966, alpha: 0).cgColor
-        drawOverlay.strokeColor = #colorLiteral(red: 0.6, green: 0.1, blue: 0.3, alpha: 1).cgColor
-        drawOverlay.fillColor = #colorLiteral(red: 0.9999018312, green: 1, blue: 0.9998798966, alpha: 0).cgColor
-        drawOverlay.lineCap = .round
         view.layer.addSublayer(drawOverlay)
-        // This sample app detects one hand only.
         handPoseRequest.maximumHandCount = 1
-        // Add state change handler to hand gesture processor.
         gestureProcessor.didChangeStateClosure = { [weak self] state in
             self?.handleGestureStateChange(state: state)
         }
-        // Add double tap gesture recognizer for clearing the draw path.
-        let recognizer = UITapGestureRecognizer(target: self, action: #selector(handleGesture(_:)))
-        recognizer.numberOfTouchesRequired = 1
-        recognizer.numberOfTapsRequired = 2
-        view.addGestureRecognizer(recognizer)
         label.font = UIFont.boldSystemFont(ofSize: 50.0)
         view.addSubview(label)
+        
+        recorder.videoListeners.append { (url) in
+            let result = self.getNumberOfFrames(url: url) // Or send this to an SDK and do something with the result
+            
+            let alert = UIAlertController(title: "Frames", message: "The video counted \(result) frames", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: nil))
+            self.present(alert, animated: true)
+            
+            FileManager.default.clearTmpDirectory() // You shouldn't to keep the video in /tmp for security reasons
+        }
+        
+        recorder.sampleBufferListeners.append { (output, sampleBuffer, connection) in
+            if output is AVCaptureVideoDataOutput {
+                self.updateHandTracking(output, didOutput: sampleBuffer, from: connection)
+            }
+        }
+        
+        view.addSubview(recordButton)
+        recordButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -20).isActive = true
+        recordButton.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
+        recordButton.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 1 / 3).isActive = true
+        recordButton.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        recordButton.addTarget(self, action: #selector(recordButtonAction), for: .touchUpInside)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        do {
-            if cameraFeedSession == nil {
-                cameraView.previewLayer.videoGravity = .resizeAspectFill
-                try setupAVSession()
-                cameraView.previewLayer.session = cameraFeedSession
-            }
-            cameraFeedSession?.startRunning()
-        } catch {
-            AppError.display(error, inViewController: self)
-        }
+        cameraView.previewLayer.videoGravity = .resizeAspectFill
+        cameraView.previewLayer.session = recorder.captureSession
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        cameraFeedSession?.stopRunning()
-        super.viewWillDisappear(animated)
-    }
-    
-    func setupAVSession() throws {
-        // Select a front facing camera, make an input.
-        guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front) else {
-            throw AppError.captureSessionSetup(reason: "Could not find a front facing camera.")
-        }
+    func toggleRecording() {
+        guard !startedRecording else { return }
+        startedRecording = true
+        recordButtonAction()
         
-        guard let deviceInput = try? AVCaptureDeviceInput(device: videoDevice) else {
-            throw AppError.captureSessionSetup(reason: "Could not create video device input.")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [self] in
+            self.startedRecording = false
+            self.recordButtonAction()
         }
-        
-        let session = AVCaptureSession()
-        session.beginConfiguration()
-        session.sessionPreset = AVCaptureSession.Preset.high
-        
-        // Add a video input.
-        guard session.canAddInput(deviceInput) else {
-            throw AppError.captureSessionSetup(reason: "Could not add video device input to the session")
-        }
-        session.addInput(deviceInput)
-        
-        let dataOutput = AVCaptureVideoDataOutput()
-        if session.canAddOutput(dataOutput) {
-            session.addOutput(dataOutput)
-            // Add a video data output.
-            dataOutput.alwaysDiscardsLateVideoFrames = true
-            dataOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)]
-            dataOutput.setSampleBufferDelegate(self, queue: videoDataOutputQueue)
-        } else {
-            throw AppError.captureSessionSetup(reason: "Could not add video data output to the session")
-        }
-        session.commitConfiguration()
-        cameraFeedSession = session
     }
     
     func processPoints(fingers: PossibleFingers) {
@@ -183,13 +146,14 @@ class CameraViewController: UIViewController {
         let wristConverted = previewLayer.layerPointConverted(fromCaptureDevicePoint: wrist)
         
         // Process new points
-        gestureProcessor.processPointsFingers(
-            ApprovalGestureProcessor.PointsFingers(thumb: Thumb(TIP: thumbTipConverted, IP: thumbIpConverted, MP: thumbMpConverted, CMC: thumbCmcConverted),
-                                                   index: Finger(TIP: indexTipConverted, DIP: indexDipConverted, PIP: indexPipConverted, MCP: indexMcpConverted),
-                                                   middle: Finger(TIP: middleTipConverted, DIP: middleDipConverted, PIP: middlePipConverted, MCP: middleMcpConverted),
-                                                   ring: Finger(TIP: ringTipConverted, DIP: ringDipConverted, PIP: ringPipConverted, MCP: ringMcpConverted),
-                                                   little: Finger(TIP: littleTipConverted, DIP: littleDipConverted, PIP: littlePipConverted, MCP: littleMcpConverted),
-                                                   wrist: wristConverted))
+        let fingers = Fingers(thumb: Thumb(TIP: thumbTipConverted, IP: thumbIpConverted, MP: thumbMpConverted, CMC: thumbCmcConverted),
+                              index: Finger(TIP: indexTipConverted, DIP: indexDipConverted, PIP: indexPipConverted, MCP: indexMcpConverted),
+                              middle: Finger(TIP: middleTipConverted, DIP: middleDipConverted, PIP: middlePipConverted, MCP: middleMcpConverted),
+                              ring: Finger(TIP: ringTipConverted, DIP: ringDipConverted, PIP: ringPipConverted, MCP: ringMcpConverted),
+                              little: Finger(TIP: littleTipConverted, DIP: littleDipConverted, PIP: littlePipConverted, MCP: littleMcpConverted),
+                              wrist: wristConverted)
+        
+        gestureProcessor.processFingerPoints(fingers)
     }
     
     private func handleGestureStateChange(state: ApprovalGestureProcessor.State) {
@@ -202,6 +166,7 @@ class CameraViewController: UIViewController {
         case .thumbsUp:
             tipsColor = .green
             label.text = "👍"
+            toggleRecording()
         case .thumbsDown, .unknown:
             tipsColor = .red
             label.text = "👎"
@@ -214,18 +179,7 @@ class CameraViewController: UIViewController {
                                pointsFingers.wrist], color: tipsColor)
     }
     
-    @IBAction func handleGesture(_ gesture: UITapGestureRecognizer) {
-        guard gesture.state == .ended else {
-            return
-        }
-        evidenceBuffer.removeAll()
-        drawPath.removeAllPoints()
-        drawOverlay.path = drawPath.cgPath
-    }
-}
-
-extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    public func updateHandTracking(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         var thumbTip: CGPoint?
         var thumbIp: CGPoint?
         var thumbMp: CGPoint?
@@ -390,7 +344,6 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
             
             wrist = CGPoint(x: wristPoint.location.x, y: 1 - wristPoint.location.y)
         } catch {
-            cameraFeedSession?.stopRunning()
             let error = AppError.visionError(error: error)
             DispatchQueue.main.async {
                 error.displayInViewController(self)
@@ -399,3 +352,45 @@ extension CameraViewController: AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 }
 
+extension CameraViewController {
+    @objc
+    func recordButtonAction() {
+        print(#function)
+        if recorder.isRecording {
+            recorder.stopRecording()
+        } else {
+            recorder.startRecording()
+        }
+        recordButton.setTitle(recorder.isRecording ? "Recording" : "Start", for: .normal)
+    }
+    
+    func getNumberOfFrames(url: URL) -> Int {
+        let asset = AVURLAsset(url: url, options: nil)
+        do {
+            let reader = try AVAssetReader(asset: asset)
+            //AVAssetReader(asset: asset, error: nil)
+            let videoTrack = asset.tracks(withMediaType: AVMediaType.video)[0]
+            
+            let readerOutput = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: nil) // NB: nil, should give you raw frames
+            reader.add(readerOutput)
+            reader.startReading()
+            
+            var nFrames = 0
+            
+            while true {
+                let sampleBuffer = readerOutput.copyNextSampleBuffer()
+                if sampleBuffer == nil {
+                    break
+                }
+                
+                nFrames = nFrames+1
+            }
+            
+            print("Num frames: \(nFrames)")
+            return nFrames
+        }catch {
+            print("Error: \(error)")
+        }
+        return 0
+    }
+}

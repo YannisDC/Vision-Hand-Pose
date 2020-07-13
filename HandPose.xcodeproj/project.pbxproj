@@ -14,6 +14,10 @@
 		C4EB82F2248AEB7B00CD7D41 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C4EB82F0248AEB7B00CD7D41 /* Main.storyboard */; };
 		C4EB82F4248AEB7B00CD7D41 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C4EB82F3248AEB7B00CD7D41 /* Assets.xcassets */; };
 		C4EB82F7248AEB7B00CD7D41 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C4EB82F5248AEB7B00CD7D41 /* LaunchScreen.storyboard */; };
+		D59CC39C24B0E77D0004EA08 /* FileManager+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59CC39B24B0E77D0004EA08 /* FileManager+Extensions.swift */; };
+		D59CC39E24B0E7BF0004EA08 /* RecorderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59CC39D24B0E7BF0004EA08 /* RecorderViewController.swift */; };
+		D59CC3A024B0E7F00004EA08 /* Recorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59CC39F24B0E7F00004EA08 /* Recorder.swift */; };
+		D59CC3A224B0F1430004EA08 /* HandTerms.swift in Sources */ = {isa = PBXBuildFile; fileRef = D59CC3A124B0F1430004EA08 /* HandTerms.swift */; };
 		D5D0391024AA54170026C971 /* ApprovalGestureProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D0390F24AA54170026C971 /* ApprovalGestureProcessor.swift */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +35,10 @@
 		C4EB82F3248AEB7B00CD7D41 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C4EB82F6248AEB7B00CD7D41 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C4EB82F8248AEB7B00CD7D41 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D59CC39B24B0E77D0004EA08 /* FileManager+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+Extensions.swift"; sourceTree = "<group>"; };
+		D59CC39D24B0E7BF0004EA08 /* RecorderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecorderViewController.swift; sourceTree = "<group>"; };
+		D59CC39F24B0E7F00004EA08 /* Recorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recorder.swift; sourceTree = "<group>"; };
+		D59CC3A124B0F1430004EA08 /* HandTerms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HandTerms.swift; sourceTree = "<group>"; };
 		D5D0390F24AA54170026C971 /* ApprovalGestureProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalGestureProcessor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -85,11 +93,15 @@
 			children = (
 				C475655A248AEBD800F111B8 /* CameraView.swift */,
 				C475655C248AEBD900F111B8 /* CameraViewController.swift */,
+				D59CC39D24B0E7BF0004EA08 /* RecorderViewController.swift */,
+				D59CC39F24B0E7F00004EA08 /* Recorder.swift */,
 				D5D0390F24AA54170026C971 /* ApprovalGestureProcessor.swift */,
+				D59CC3A124B0F1430004EA08 /* HandTerms.swift */,
 				C4EB82F5248AEB7B00CD7D41 /* LaunchScreen.storyboard */,
 				C4EB82F0248AEB7B00CD7D41 /* Main.storyboard */,
 				C4EB82EA248AEB7B00CD7D41 /* AppDelegate.swift */,
 				C4EB82EC248AEB7B00CD7D41 /* SceneDelegate.swift */,
+				D59CC39B24B0E77D0004EA08 /* FileManager+Extensions.swift */,
 				C4EB82F3248AEB7B00CD7D41 /* Assets.xcassets */,
 				C4756560248AEC4100F111B8 /* HandPose.entitlements */,
 				C4EB82F8248AEB7B00CD7D41 /* Info.plist */,
@@ -173,6 +185,10 @@
 				D5D0391024AA54170026C971 /* ApprovalGestureProcessor.swift in Sources */,
 				C475655D248AEBD900F111B8 /* CameraView.swift in Sources */,
 				C475655F248AEBD900F111B8 /* CameraViewController.swift in Sources */,
+				D59CC39C24B0E77D0004EA08 /* FileManager+Extensions.swift in Sources */,
+				D59CC3A224B0F1430004EA08 /* HandTerms.swift in Sources */,
+				D59CC39E24B0E7BF0004EA08 /* RecorderViewController.swift in Sources */,
+				D59CC3A024B0E7F00004EA08 /* Recorder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

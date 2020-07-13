@@ -22,6 +22,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>This application uses the camera to demonstrate new Vision technology.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This will let you record videos with audio.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
