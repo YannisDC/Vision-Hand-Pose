@@ -42,6 +42,8 @@ class ApprovalGestureProcessor {
     }
     
     func processFingerPoints(_ pointsFingers: Fingers) {
+        pointsFingers.findGesture()
+        
         lastProcessedPointsFingers = pointsFingers
 //        let distance = pointsFingers.index.TIP.isLocatedLower(then: pointsFingers.thumb.TIP)
         let distance = pointsFingers.index.TIP.distance(from: pointsFingers.thumb.TIP)
@@ -75,5 +77,16 @@ extension CGPoint {
     
     func isLocatedLower(then point: CGPoint) -> CGFloat {
         return y > point.y ? 1 : 100
+    }
+    
+    static func angleBetween(p1: CGPoint, p2: CGPoint, p3: CGPoint) -> Double {
+        let v1 = CGVector(dx: p1.x - p2.x, dy: p1.y - p2.y)
+        let v2 = CGVector(dx: p3.x - p2.x, dy: p3.y - p2.y)
+        
+        let theta1 = atan2(v1.dy, v1.dx)
+        let theta2 = atan2(v2.dy, v2.dx)
+        
+        let angle = theta1 - theta2
+        return (Double(angle) * 180.0) / Double.pi
     }
 }
