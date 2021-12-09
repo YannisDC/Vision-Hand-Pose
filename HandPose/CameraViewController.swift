@@ -224,54 +224,54 @@ class CameraViewController: RecorderViewController {
             try handler.perform([handPoseRequest])
             // Continue only when a hand was detected in the frame.
             // Since we set the maximumHandCount property of the request to 1, there will be at most one observation.
-            guard let observation = handPoseRequest.results?.first as? VNRecognizedPointsObservation else {
+            guard let observation = handPoseRequest.results?.first else {
                 return
             }
             // Get points for thumb and index finger.
-            let thumbPoints = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyThumb)
-            let indexFingerPoints = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyIndexFinger)
-            let middleFingerPoints = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyMiddleFinger)
-            let ringFingerPoints = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyRingFinger)
-            let littleFingerPoints = try observation.recognizedPoints(forGroupKey: .handLandmarkRegionKeyLittleFinger)
-            let wristPoints = try observation.recognizedPoints(forGroupKey: .all)
+            let thumbPoints = try observation.recognizedPoints(.thumb)
+            let indexFingerPoints = try observation.recognizedPoints(.indexFinger)
+            let middleFingerPoints = try observation.recognizedPoints(.middleFinger)
+            let ringFingerPoints = try observation.recognizedPoints(.ringFinger)
+            let littleFingerPoints = try observation.recognizedPoints(.littleFinger)
+            let wristPoints = try observation.recognizedPoints(.all)
             
             // Look for tip points.
-            guard let thumbTipPoint = thumbPoints[.handLandmarkKeyThumbTIP],
-                  let thumbIpPoint = thumbPoints[.handLandmarkKeyThumbIP],
-                  let thumbMpPoint = thumbPoints[.handLandmarkKeyThumbMP],
-                  let thumbCMCPoint = thumbPoints[.handLandmarkKeyThumbCMC] else {
+            guard let thumbTipPoint = thumbPoints[.thumbTip],
+                  let thumbIpPoint = thumbPoints[.thumbIP],
+                  let thumbMpPoint = thumbPoints[.thumbMP],
+                  let thumbCMCPoint = thumbPoints[.thumbCMC] else {
                 return
             }
             
-            guard let indexTipPoint = indexFingerPoints[.handLandmarkKeyIndexTIP],
-                  let indexDipPoint = indexFingerPoints[.handLandmarkKeyIndexDIP],
-                  let indexPipPoint = indexFingerPoints[.handLandmarkKeyIndexPIP],
-                  let indexMcpPoint = indexFingerPoints[.handLandmarkKeyIndexMCP] else {
+            guard let indexTipPoint = indexFingerPoints[.indexTip],
+                  let indexDipPoint = indexFingerPoints[.indexDIP],
+                  let indexPipPoint = indexFingerPoints[.indexPIP],
+                  let indexMcpPoint = indexFingerPoints[.indexMCP] else {
                 return
             }
             
-            guard let middleTipPoint = middleFingerPoints[.handLandmarkKeyMiddleTIP],
-                  let middleDipPoint = middleFingerPoints[.handLandmarkKeyMiddleDIP],
-                  let middlePipPoint = middleFingerPoints[.handLandmarkKeyMiddlePIP],
-                  let middleMcpPoint = middleFingerPoints[.handLandmarkKeyMiddleMCP] else {
+            guard let middleTipPoint = middleFingerPoints[.middleTip],
+                  let middleDipPoint = middleFingerPoints[.middleDIP],
+                  let middlePipPoint = middleFingerPoints[.middlePIP],
+                  let middleMcpPoint = middleFingerPoints[.middleMCP] else {
                 return
             }
             
-            guard let ringTipPoint = ringFingerPoints[.handLandmarkKeyRingTIP],
-                  let ringDipPoint = ringFingerPoints[.handLandmarkKeyRingDIP],
-                  let ringPipPoint = ringFingerPoints[.handLandmarkKeyRingPIP],
-                  let ringMcpPoint = ringFingerPoints[.handLandmarkKeyRingMCP] else {
+            guard let ringTipPoint = ringFingerPoints[.ringTip],
+                  let ringDipPoint = ringFingerPoints[.ringDIP],
+                  let ringPipPoint = ringFingerPoints[.ringPIP],
+                  let ringMcpPoint = ringFingerPoints[.ringMCP] else {
                 return
             }
             
-            guard let littleTipPoint = littleFingerPoints[.handLandmarkKeyLittleTIP],
-                  let littleDipPoint = littleFingerPoints[.handLandmarkKeyLittleDIP],
-                  let littlePipPoint = littleFingerPoints[.handLandmarkKeyLittlePIP],
-                  let littleMcpPoint = littleFingerPoints[.handLandmarkKeyLittleMCP] else {
+            guard let littleTipPoint = littleFingerPoints[.littleTip],
+                  let littleDipPoint = littleFingerPoints[.littleDIP],
+                  let littlePipPoint = littleFingerPoints[.littlePIP],
+                  let littleMcpPoint = littleFingerPoints[.littleMCP] else {
                 return
             }
             
-            guard let wristPoint = wristPoints[.handLandmarkKeyWrist] else {
+            guard let wristPoint = wristPoints[.wrist] else {
                 return
             }
             
